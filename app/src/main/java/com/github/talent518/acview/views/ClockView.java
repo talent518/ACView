@@ -9,7 +9,6 @@ import android.graphics.Path;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import java.text.SimpleDateFormat;
@@ -49,10 +48,20 @@ public class ClockView extends View {
 
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\nHH:mm:ss");
 
+    private int mWidth = 0, mHeight = 0;
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        mWidth = w;
+        mHeight = h;
+
+        super.onSizeChanged(w, h, oldw, oldh);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         double angle;
-        final float RADIUS = Math.min(canvas.getWidth(), canvas.getHeight()) / 2.0f;
+        final float RADIUS = Math.min(mWidth, mHeight) / 2.0f;
         final float DIAL = RADIUS - 10.0f;
         final float DIAL2 = DIAL - RADIUS * 0.05f;
         final float TEXTSIZE = DIAL2 * 0.125f;
@@ -67,14 +76,12 @@ public class ClockView extends View {
         final float SECOND = POINTER;
         final float SECONDWEIGHT = POINTER * 0.0125f;
         float x, y, x2, y2;
-        final float cx = canvas.getWidth() / 2.0f, cy = canvas.getHeight() / 2.0f;
+        final float cx = mWidth / 2.0f, cy = mHeight / 2.0f;
 
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR);
         int minute = calendar.get(Calendar.MINUTE);
         int second = calendar.get(Calendar.SECOND);
-
-        // Log.i(TAG, canvas.getWidth() + "," + canvas.getHeight());
 
         Paint paint = new Paint();
         paint.setColor(Color.BLACK);
@@ -87,7 +94,7 @@ public class ClockView extends View {
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setAntiAlias(true);
 
-        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
+        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
         canvas.drawColor(Color.WHITE);
 
         canvas.drawCircle(cx, cy, DIAL, paint);
@@ -150,14 +157,14 @@ public class ClockView extends View {
      * @param angle
      * @param paint
      */
-    protected void drawPointer(Canvas canvas, float cx, float cy, float radius, float scale, float angle, Paint paint) {
+    protected void drawPointer(Canvas canvas, float cx, float cy, float radius, float scale, double angle, Paint paint) {
         float x = cx + (float) (cos(angle) * radius);
         float y = cy - (float) (sin(angle) * radius);
         float x2 = cx + (float) (cos(angle + 180) * 24.0f);
         float y2 = cy - (float) (sin(angle + 180) * 24.0f);
         float r = paint.getStrokeWidth() * 1.5f;
         float R = radius + radius * scale;
-        float agl = (float)(Math.acos(r / radius * scale) * 180.0f / Math.PI);
+        double agl = (float) (Math.acos(r / radius * scale) * 180.0f / Math.PI);
 
         canvas.drawLine(x2, y2, x, y, paint);
 
