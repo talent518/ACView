@@ -59,6 +59,12 @@ public class ClockView extends View {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(height, height);
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         double angle;
         final float RADIUS = Math.min(mWidth, mHeight) / 2.0f;

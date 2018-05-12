@@ -89,6 +89,12 @@ public class FiveAngleStarView extends View implements View.OnClickListener {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(height, height);
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         double angle;
         float radius = Math.min(mWidth, mHeight) / 2.0f - 10.0f;
