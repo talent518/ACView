@@ -5,5 +5,5 @@
   * HelicalLineView => 螺旋线
 
 ## 录屏
-![模拟时钟/五角星/螺旋线](ScreenRecord.mp4)
+[![模拟时钟/五角星/螺旋线](ScreenRecord.jpg)](ScreenRecord.mp4)
 
