@@ -4,6 +4,6 @@
   * FiveAngleStarView => 五角星
   * HelicalLineView => 螺旋线
 
-## 截屏
-![模拟时钟/五角星](5AngleStar-Clock.jpg)
+## 录屏
+![模拟时钟/五角星/螺旋线](ScreenRecord.mp4)
 
