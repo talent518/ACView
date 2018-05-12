@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -75,14 +76,15 @@ public class FiveAngleStarView extends View implements View.OnClickListener {
         float x, y, x2, y2;
         final float cx = canvas.getWidth() / 2.0f, cy = canvas.getHeight() / 2.0f;
 
-        Log.i(TAG, canvas.getWidth() + "," + canvas.getHeight());
+        // Log.i(TAG, canvas.getWidth() + "," + canvas.getHeight());
 
         Paint paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setStrokeWidth(2.0f);
-        paint.setAntiAlias(false);
+        paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.FILL);
 
+        canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG));
         canvas.drawColor(Color.WHITE);
         for (int i = 0; i <= 720; i += 144) {
             angle = (90 + i + mAngle) * Math.PI / 180.0;
