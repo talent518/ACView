@@ -25,11 +25,12 @@ import java.util.Arrays;
 
 public class ProgressView extends View {
     private static final String TAG = ProgressView.class.getSimpleName();
-    private static final float frameAngles[] = new float[40];
+    private static final int NFRAMES = 40;
+    private static final float frameAngles[] = new float[NFRAMES];
     private static final File savePath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), TAG);
+    private static final int frameRates[] = new int[]{4, 4, 4, 6, 8, 14}; // 数组长度表示为N, 每N分之一的角度占用多少帧
 
     static {
-        final int frameRates[] = new int[]{4, 4, 4, 6, 8, 14}; // 数组长度表示为N, 每N分之一的角度占用多少帧
         float perAngle = 360.0f / frameRates.length, angle = 0, ppAngle;
         int nRate = 0;
         int n = 0;
@@ -42,7 +43,7 @@ public class ProgressView extends View {
                 frameAngles[n++] = angle;
             }
         }
-        Log.i(TAG, Arrays.toString(frameAngles)); // 已生成的每帧的绘图角度(单位: 度)
+        Log.i(TAG, "frameAngles: " + Arrays.toString(frameAngles)); // 已生成的每帧的绘图角度(单位: 度)
         if (nRate != frameAngles.length) {
             throw new RuntimeException("frame number: " + nRate + " != " + frameAngles.length + "");
         }
@@ -51,46 +52,169 @@ public class ProgressView extends View {
         }
     }
 
+    private final float[] mProgressAngles = new float[NFRAMES], mProgressSweepAngles = new float[NFRAMES];
+    private boolean isLoading = true, isPlaying = false;
+    private float mStartAngle = 0, mSweepAngle = 90;
     private int mSleepDelay = 150, mDelay = 30;
     private int mFrameIndex = -1;
+    private int mWidth = 0, mHeight = 0;
+    private float mProgress = -1;
+    private String mLoadingLabel = "正在加载", mProgressLabel = "加载完成";
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            mFrameIndex++;
-            if (mFrameIndex == frameAngles.length) {
-                mFrameIndex = -1;
-
-                sendEmptyMessageDelayed(0, mSleepDelay);
-            } else {
-                sendEmptyMessageDelayed(0, mDelay);
+            if (!isPlaying) {
+                invalidate();
+                return;
             }
+
+            if (mProgress == -1) {
+                mFrameIndex++;
+                if (mFrameIndex == frameAngles.length) {
+                    mFrameIndex = -1;
+                    mStartAngle = 0;
+
+                    sendEmptyMessageDelayed(0, mSleepDelay);
+                } else {
+                    mStartAngle = frameAngles[mFrameIndex];
+
+                    sendEmptyMessageDelayed(0, mDelay);
+                }
+
+                mSweepAngle = 90;
+            } else {
+                mFrameIndex++;
+                if (mFrameIndex >= mProgressAngles.length - 1) {
+                    isPlaying = false;
+                    mFrameIndex = mProgressAngles.length - 1;
+                } else {
+                    sendEmptyMessageDelayed(0, mDelay);
+                }
+                mStartAngle = mProgressAngles[mFrameIndex];
+                mSweepAngle = mProgressSweepAngles[mFrameIndex];
+            }
+
             invalidate();
         }
     };
-    private int mWidth = 0, mHeight = 0;
 
     public ProgressView(Context context) {
         super(context);
 
-        mHandler.sendEmptyMessageDelayed(0, mDelay);
+        play();
     }
 
     public ProgressView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
-        mHandler.sendEmptyMessageDelayed(0, mDelay);
+        play();
     }
 
     public ProgressView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        mHandler.sendEmptyMessageDelayed(0, mDelay);
+        play();
     }
 
     public ProgressView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
+        play();
+    }
+
+    public void pause() {
+        isPlaying = false;
+        mHandler.removeMessages(0);
+    }
+
+    public void stop() {
+        isPlaying = false;
+        mFrameIndex = -1;
+        mHandler.removeMessages(0);
+    }
+
+    public void play() {
+        if (isPlaying) {
+            return;
+        }
+
+        isPlaying = true;
+        isLoading = true;
+        mFrameIndex = -1;
+        mProgress = -1;
+        mStartAngle = 0;
+        mSweepAngle = 90;
+        mHandler.removeMessages(0);
         mHandler.sendEmptyMessageDelayed(0, mDelay);
+        invalidate();
+    }
+
+    public void play(int delay) {
+        mDelay = delay;
+
+        play();
+    }
+
+    public float getProgress() {
+        return mProgress;
+    }
+
+    public void setProgress(float progress) {
+        if (progress == -1) {
+            return;
+        }
+
+        mProgress = progress;
+        mFrameIndex = -1;
+        isLoading = false;
+
+        float sweepAngle = progress * 360.0f;
+        float startAngle = 45.0f - sweepAngle / 2.0f;
+        if (startAngle < 0) {
+            startAngle += 360.0f;
+        }
+        float rotationAngle;
+        if (mStartAngle >= 225 || mStartAngle <= 45) {
+            rotationAngle = 360 + (startAngle <= 45 ? startAngle + 360 : startAngle) - (mStartAngle <= 45 ? mStartAngle + 360 : mStartAngle);
+        } else {
+            rotationAngle = (startAngle <= 45 ? startAngle + 360 : startAngle) - mStartAngle;
+        }
+
+        float perAngle = rotationAngle / frameRates.length, perSweep = (sweepAngle - 90) / frameRates.length, angle = mStartAngle, sweep = 90, ppAngle, ppSweep;
+        int n = 0;
+        for (int rate : frameRates) {
+            ppAngle = perAngle / rate;
+            ppSweep = perSweep / rate;
+            for (int i = 0; i < rate; i++) {
+                angle += ppAngle;
+                sweep += ppSweep;
+                mProgressAngles[n] = angle;
+                mProgressSweepAngles[n++] = sweep;
+            }
+        }
+
+        Log.i(TAG, "startAngle: " + startAngle);
+        Log.i(TAG, "sweepAngle: " + sweepAngle);
+        Log.i(TAG, "mStartAngle: " + mStartAngle);
+        Log.i(TAG, "rotationAngle: " + rotationAngle);
+        Log.i(TAG, "mProgressAngles: " + Arrays.toString(mProgressAngles));
+        Log.i(TAG, "mProgressSweepAngles: " + Arrays.toString(mProgressSweepAngles));
+    }
+
+    public String getmLoadingLabel() {
+        return mLoadingLabel;
+    }
+
+    public void setmLoadingLabel(String mLoadingLabel) {
+        this.mLoadingLabel = mLoadingLabel;
+    }
+
+    public String getmProgressLabel() {
+        return mProgressLabel;
+    }
+
+    public void setmProgressLabel(String mProgressLabel) {
+        this.mProgressLabel = mProgressLabel;
     }
 
     @Override
@@ -107,16 +231,16 @@ public class ProgressView extends View {
 
                 file = new File(savePath, "01.png");
                 if (!file.exists()) {
-                    draw(canvas, 0);
+                    draw(canvas, 0, 90);
                     saveImage(bitmap, file);
                 }
 
                 int n = 2;
-                for (float nframe : frameAngles) {
+                for (float angle : frameAngles) {
                     file = new File(savePath, (n < 10 ? "0" : "") + n + ".png");
                     n++;
                     if (!file.exists()) {
-                        draw(canvas, nframe);
+                        draw(canvas, angle, 90);
                         saveImage(bitmap, file);
                     }
                 }
@@ -147,10 +271,10 @@ public class ProgressView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        draw(canvas, mFrameIndex == -1 ? 0 : frameAngles[mFrameIndex]);
+        draw(canvas, mStartAngle, mSweepAngle);
     }
 
-    private void draw(Canvas canvas, float nframe) {
+    private void draw(Canvas canvas, float startAngle, float sweepAngle) {
         float cx = mWidth / 2.0f;
         float cy = mHeight / 2.0f;
 
@@ -163,6 +287,8 @@ public class ProgressView extends View {
 //        linePaint.setStyle(Paint.Style.STROKE);
 //        canvas.drawLine(0, cy, mWidth, cy, linePaint);
 //        canvas.drawLine(cx, 0, cx, mHeight, linePaint);
+//        canvas.drawLine(0, 0, mWidth, mHeight, linePaint);
+//        canvas.drawLine(mWidth, 0, 0, mHeight, linePaint);
 
         Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.WHITE);
@@ -170,7 +296,8 @@ public class ProgressView extends View {
         textPaint.setTextSize(cx / 8.0f);
         textPaint.setAntiAlias(true);
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-        canvas.drawText("正在关机", cx, cy - (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.top, textPaint);
+
+        canvas.drawText(isLoading ? mLoadingLabel : mProgressLabel, cx, cy - (fontMetrics.bottom - fontMetrics.top) / 2 - fontMetrics.top, textPaint);
 
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
@@ -184,6 +311,6 @@ public class ProgressView extends View {
 
         RectF rectF = new RectF(cx / 2.0f, cy / 2.0f, cx * 3.0f / 2.0f, cy * 3.0f / 2.0f);
         paint.setShader(new LinearGradient(rectF.left, rectF.top, rectF.right, rectF.bottom, new int[]{0xFF9C82FF, 0xFF38EDFB}, null, Shader.TileMode.CLAMP));
-        canvas.drawArc(rectF, nframe, 90, false, paint);
+        canvas.drawArc(rectF, startAngle, sweepAngle, false, paint);
     }
 }

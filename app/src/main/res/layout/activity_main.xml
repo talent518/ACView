@@ -28,6 +28,7 @@
                 android:layout_height="match_parent" />
 
             <com.github.talent518.acview.views.ProgressView
+                android:id="@+id/pv_progress"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
