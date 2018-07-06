@@ -5,6 +5,6 @@
   * HelicalLineView => 螺旋线
   * ProgressView => 加载动画
 
-## 录屏
-[![模拟时钟/五角星/螺旋线](ScreenRecord.jpg)](ScreenRecord.mp4)
+## 截屏
+[![截屏](ScreenShot.jpg)](ScreenShot.jpg)
 
