@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 		mProgressBarView.setOnTouchListener(new View.OnTouchListener() {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				mProgressBarView.setProgress(1 - event.getY() / mProgressBarView.getMeasuredHeight());
+				mProgressBarView.setProgress(100-(int) ((double) (event.getY() * 100.0f) / (double) mProgressBarView.getMeasuredHeight()));
 				return true;
 			}
 		});
@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public boolean onKeyUp(int keyCode, @NonNull KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-			mProgressBarView.setProgress(mProgressBarView.getProgress() + 0.01f);
+			mProgressBarView.setProgress(mProgressBarView.getProgress() + 1);
 		} else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-			mProgressBarView.setProgress(mProgressBarView.getProgress() - 0.01f);
+			mProgressBarView.setProgress(mProgressBarView.getProgress() - 1);
 		}
 
 		return super.onKeyUp(keyCode, event);

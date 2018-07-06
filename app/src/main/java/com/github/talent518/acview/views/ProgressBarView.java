@@ -5,17 +5,19 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 public class ProgressBarView extends View {
-	private float mProgress = 0.5f;
+	private int mProgress = 50;
+	private Bitmap mDstBitmap, mDstTextBitmap, mSrcBitmap;
+	private Canvas mDstCanvas, mDstTextCanvas, mSrcCanvas;
 
 	public ProgressBarView(Context context) {
 		super(context);
@@ -33,67 +35,129 @@ public class ProgressBarView extends View {
 		super(context, attrs, defStyleAttr, defStyleRes);
 	}
 
-	public float getProgress() {
+	public int getProgress() {
 		return mProgress;
 	}
 
-	public void setProgress(float progress) {
-		if (progress <= 0 || progress > 1) {
+	public void setProgress(int progress) {
+		if (progress < 0) {
+			if (mProgress == 0)
+				return;
+			else
+				progress = 0;
+		} else if (progress > 100) {
+			if (mProgress == 100) {
+				return;
+			} else
+				progress = 100;
+		} else if (mProgress == progress) {
 			return;
 		}
+
+		Log.i(getClass().getSimpleName(), "setProgress: " + progress);
 
 		mProgress = progress;
 		invalidate();
 	}
 
-	protected Bitmap makeProgressBitmap(int w, int h) {
-		Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-		Canvas canvas = new Canvas(bitmap);
+	private void makeProgressBitmap(boolean isXor) {
+		int w = mSrcBitmap.getWidth();
+		int h = mSrcBitmap.getHeight();
+		Canvas canvas = mSrcCanvas;
 
-		float progress = canvas.getHeight() * mProgress;
-		canvas.drawColor(Color.TRANSPARENT);
+		float progress = h * mProgress / 100.0f;
 
+		// 清空位图
 		Paint paint = new Paint();
-		paint.setColor(0x88000000);
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		canvas.drawPaint(paint);
+
+		paint = new Paint();
+		paint.setColor(isXor ? Color.WHITE : 0x88000000);
 		paint.setStyle(Paint.Style.FILL);
 
-		canvas.drawRect(new RectF(0, 0, canvas.getWidth(), canvas.getHeight() - progress), paint);
+		canvas.drawRect(new RectF(0, 0, w, h - progress), paint);
 
-		paint.setColor(Color.WHITE);
-		canvas.drawRect(new RectF(0, canvas.getHeight() - progress, canvas.getWidth(), canvas.getHeight()), paint);
+		paint.setColor(isXor ? 0x88000000 : Color.WHITE);
+		canvas.drawRect(new RectF(0, h - progress, w, h), paint);
 
-		return bitmap;
+		canvas.save();
 	}
 
-	protected Bitmap makeRoundBitmap(int w, int h) {
-		Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-		Canvas canvas = new Canvas(bitmap);
+	private void makeRoundBitmap() {
+		int w = mDstBitmap.getWidth();
+		int h = mDstBitmap.getHeight();
+		Canvas canvas = mDstCanvas;
 		float corners = Math.min(w / 2.0f, h / 2.0f);
 		Rect rect = new Rect(0, 0, w, h);
 		RectF rectF = new RectF(rect);
 
+		// 清空位图
 		Paint paint = new Paint();
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		canvas.drawPaint(paint);
+
+		paint = new Paint();
 		paint.setColor(Color.BLACK);
 		paint.setStyle(Paint.Style.FILL);
 		paint.setAntiAlias(true);
 
-		canvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
-		canvas.drawColor(Color.TRANSPARENT);
 		canvas.drawRoundRect(rectF, corners, corners, paint);
 
-		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-		canvas.drawBitmap(makeProgressBitmap(w, h), null, rect, paint);
+		makeProgressBitmap(false);
 
-		return bitmap;
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+		canvas.drawBitmap(mSrcBitmap, null, rect, paint);
+
+		canvas.save();
+	}
+
+	private void makeTextBitmap() {
+		int w = mDstTextBitmap.getWidth();
+		int h = mDstTextBitmap.getHeight();
+		Canvas canvas = mDstTextCanvas;
+		Rect rect = new Rect(0, 0, w, h);
+
+		// 清空位图
+		Paint paint = new Paint();
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+		canvas.drawPaint(paint);
+
+		paint = new Paint();
+		paint.setAntiAlias(true);
+		paint.setColor(Color.BLACK);
+		paint.setTextSize(w/2.2f);
+		paint.setTextAlign(Paint.Align.CENTER);
+
+		canvas.drawText(Integer.toString(mProgress), w / 2.0f, h / 2.0f + paint.getTextSize() / 3.0f, paint);
+
+		makeProgressBitmap(true);
+
+		paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+		canvas.drawBitmap(mSrcBitmap, null, rect, paint);
+
+		canvas.save();
+	}
+
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		mDstBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+		mDstCanvas = new Canvas(mDstBitmap);
+		mDstTextBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+		mDstTextCanvas = new Canvas(mDstTextBitmap);
+		mSrcBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+		mSrcCanvas = new Canvas(mSrcBitmap);
 	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
-		int w = canvas.getWidth();
-		int h = canvas.getHeight();
-
 		canvas.drawColor(Color.TRANSPARENT);
-		canvas.drawBitmap(makeRoundBitmap(w, h), 0, 0, null);
+
+		makeRoundBitmap();
+		canvas.drawBitmap(mDstBitmap, 0, 0, null);
+
+		makeTextBitmap();
+		canvas.drawBitmap(mDstTextBitmap, 0, 0, null);
 	}
 
 }
