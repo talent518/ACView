@@ -6,6 +6,7 @@
   * ProgressView => 加载动画
   * ProgressBarView => 进度条
   * RoundRectLinearGradientRotateView => 圆角矩形的线性渐变色旋转
+  * SweepGradientRotateView => 圆形渐变色旋转
 
 ## 截屏
 [![截屏](ScreenShot.jpg)](ScreenShot.jpg)
