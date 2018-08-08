@@ -201,19 +201,19 @@ public class ProgressView extends View {
         Log.i(TAG, "mProgressSweepAngles: " + Arrays.toString(mProgressSweepAngles));
     }
 
-    public String getmLoadingLabel() {
+    public String getLoadingLabel() {
         return mLoadingLabel;
     }
 
-    public void setmLoadingLabel(String mLoadingLabel) {
+    public void setLoadingLabel(String mLoadingLabel) {
         this.mLoadingLabel = mLoadingLabel;
     }
 
-    public String getmProgressLabel() {
+    public String getProgressLabel() {
         return mProgressLabel;
     }
 
-    public void setmProgressLabel(String mProgressLabel) {
+    public void setProgressLabel(String mProgressLabel) {
         this.mProgressLabel = mProgressLabel;
     }
 

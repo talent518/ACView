@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 			public void onClick(View v) {
 				if (mProgressView.getProgress() == -1) {
 					float progress = (float) Math.random();
-					mProgressView.setmProgressLabel(Float.toString((int) (progress * 1000) / 10.0f) + "%");
+					mProgressView.setProgressLabel(Float.toString((int) (progress * 1000) / 10.0f) + "%");
 					mProgressView.setProgress(progress);
 				} else {
 					mProgressView.play();
