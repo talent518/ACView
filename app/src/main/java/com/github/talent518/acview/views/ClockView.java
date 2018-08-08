@@ -6,8 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Path;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -20,35 +18,30 @@ import java.util.Date;
  */
 public class ClockView extends View {
     private static final String TAG = ClockView.class.getSimpleName();
-    private Handler mHandler = new Handler() {
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\nHH:mm:ss");
+    private Runnable mRunnable = new Runnable() {
         @Override
-        public void handleMessage(Message msg) {
-            sendEmptyMessageDelayed(0, 1000);
+        public void run() {
+            postOnAnimationDelayed(this, 1000);
+
             invalidate();
         }
     };
+    private int mWidth = 0, mHeight = 0;
 
     public ClockView(Context context) {
-        super(context);
-
-        mHandler.sendEmptyMessageDelayed(0, 1000);
+        this(context, null);
     }
 
     public ClockView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        mHandler.sendEmptyMessageDelayed(0, 1000);
+        this(context, attrs, 0);
     }
 
     public ClockView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        mHandler.sendEmptyMessageDelayed(0, 1000);
+        postOnAnimation(mRunnable);
     }
-
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\nHH:mm:ss");
-
-    private int mWidth = 0, mHeight = 0;
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {

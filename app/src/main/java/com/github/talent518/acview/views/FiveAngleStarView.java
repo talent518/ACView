@@ -5,8 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PaintFlagsDrawFilter;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -17,52 +15,16 @@ import java.util.Date;
  */
 public class FiveAngleStarView extends View implements View.OnClickListener {
     private static final String TAG = FiveAngleStarView.class.getSimpleName();
-
-    public FiveAngleStarView(Context context) {
-        super(context);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
-    }
-
-    public FiveAngleStarView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
-    }
-
-    public FiveAngleStarView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
-    }
-
-    @Override
-    public void onClick(View v) {
-        isPlay = !isPlay;
-        if (isPlay) {
-            bTime = new Date().getTime();
-        }
-        mHandler.sendEmptyMessage(0);
-    }
-
     private boolean isPlay = true;
-
     private long runTime = -1;
     private long bTime = new Date().getTime();
     private double mAngle = 0;
     private double mAngleStep = 1;
-    private Handler mHandler = new Handler() {
+    private Runnable mRunnable = new Runnable() {
         @Override
-        public void handleMessage(Message msg) {
+        public void run() {
             if (isPlay) {
-                removeMessages(0);
-                sendEmptyMessage(0);
+                postOnAnimation(this);
 
                 mAngle += mAngleStep;
                 if ((mAngleStep > 0 && mAngle >= 360) || (mAngleStep < 0 && mAngle <= 0)) {
@@ -77,8 +39,29 @@ public class FiveAngleStarView extends View implements View.OnClickListener {
             invalidate();
         }
     };
-
     private int mWidth = 0, mHeight = 0;
+    public FiveAngleStarView(Context context) {
+        this(context, null);
+    }
+    public FiveAngleStarView(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+    public FiveAngleStarView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        setClickable(true);
+        setOnClickListener(this);
+        postOnAnimationDelayed(mRunnable, 20);
+    }
+
+    @Override
+    public void onClick(View v) {
+        isPlay = !isPlay;
+        if (isPlay) {
+            bTime = new Date().getTime();
+        }
+        postOnAnimation(mRunnable);
+    }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {

@@ -5,15 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Handler;
-import android.os.Message;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * 螺旋线
@@ -23,27 +16,15 @@ public class HelicalLineView extends View implements View.OnClickListener {
     private static final String TAG = HelicalLineView.class.getSimpleName();
 
     public HelicalLineView(Context context) {
-        super(context);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
+        this(context, null);
     }
 
     public HelicalLineView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
+        this(context, attrs, 0);
     }
 
     public HelicalLineView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-
-        setClickable(true);
-        setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
+        this(context, attrs, defStyleAttr, 0);
     }
 
     public HelicalLineView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -51,23 +32,23 @@ public class HelicalLineView extends View implements View.OnClickListener {
 
         setClickable(true);
         setOnClickListener(this);
-        mHandler.sendEmptyMessage(0);
+        postOnAnimation(mRunnable);
     }
 
     @Override
     public void onClick(View v) {
         isPlay = !isPlay;
-        mHandler.sendEmptyMessage(0);
+
+        postOnAnimation(mRunnable);
     }
 
     private float mAngle = 0;
     private float mAngleStep = 1;
-    private Handler mHandler = new Handler() {
+    private Runnable mRunnable = new Runnable() {
         @Override
-        public void handleMessage(Message msg) {
+        public void run() {
             if (isPlay) {
-                removeMessages(0);
-                sendEmptyMessage(0);
+                postOnAnimation(this);
 
                 mAngle += mAngleStep;
                 if ((mAngleStep > 0 && mAngle >= 720) || (mAngleStep < 0 && mAngle <= 0)) {

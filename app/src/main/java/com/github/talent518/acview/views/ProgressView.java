@@ -10,8 +10,6 @@ import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -60,9 +58,9 @@ public class ProgressView extends View {
     private int mWidth = 0, mHeight = 0;
     private float mProgress = -1;
     private String mLoadingLabel = "正在加载", mProgressLabel = "加载完成";
-    private Handler mHandler = new Handler() {
+    private Runnable mRunnable = new Runnable() {
         @Override
-        public void handleMessage(Message msg) {
+        public void run() {
             if (!isPlaying) {
                 invalidate();
                 return;
@@ -74,11 +72,11 @@ public class ProgressView extends View {
                     mFrameIndex = -1;
                     mStartAngle = 0;
 
-                    sendEmptyMessageDelayed(0, mSleepDelay);
+                    postOnAnimationDelayed(this, mSleepDelay);
                 } else {
                     mStartAngle = frameAngles[mFrameIndex];
 
-                    sendEmptyMessageDelayed(0, mDelay);
+                    postOnAnimationDelayed(this, mDelay);
                 }
 
                 mSweepAngle = 90;
@@ -88,7 +86,7 @@ public class ProgressView extends View {
                     isPlaying = false;
                     mFrameIndex = mProgressAngles.length - 1;
                 } else {
-                    sendEmptyMessageDelayed(0, mDelay);
+                    postOnAnimationDelayed(this, mDelay);
                 }
                 mStartAngle = mProgressAngles[mFrameIndex];
                 mSweepAngle = mProgressSweepAngles[mFrameIndex];
@@ -124,13 +122,11 @@ public class ProgressView extends View {
 
     public void pause() {
         isPlaying = false;
-        mHandler.removeMessages(0);
     }
 
     public void stop() {
         isPlaying = false;
         mFrameIndex = -1;
-        mHandler.removeMessages(0);
     }
 
     public void play() {
@@ -144,8 +140,7 @@ public class ProgressView extends View {
         mProgress = -1;
         mStartAngle = 0;
         mSweepAngle = 90;
-        mHandler.removeMessages(0);
-        mHandler.sendEmptyMessageDelayed(0, mDelay);
+        postOnAnimationDelayed(mRunnable, mDelay);
         invalidate();
     }
 
